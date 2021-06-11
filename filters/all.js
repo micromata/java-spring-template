@@ -161,3 +161,70 @@ function createEnum(val){
   return result;
 };
 filter.createEnum = createEnum;
+
+function addBackSlashToPattern(val) {  
+  let result = val.replace(/\\/g, "\\\\");
+  return result;
+}
+filter.addBackSlashToPattern = addBackSlashToPattern;
+
+
+/**
+ * Collects all porperties of the schemaObj and the inherited allOf
+ * @param {Schema} schemaObj 
+ */
+ function collectProperties(schemaObj) {
+  let res = schemaObj.properties();
+  // collect all allOf sub porperties
+  if(schemaObj.allOf() !== null) {
+    schemaObj.allOf().forEach(allOfItem => {
+      res = Object.assign(res, allOfItem.properties());
+    });
+  }
+
+  return res;
+}
+filter.collectProperties = collectProperties;
+
+/**
+ * Checks if the given schema is a class which has subclasses
+ * @param {Schema} schema 
+ * @returns 
+ */
+function hasSubClasses(schema) {  
+  return schema._json['x-java-sub-classes'] !== undefined;
+}
+filter.hasSubClasses = hasSubClasses
+
+/**
+ * Checks if the schema has java implementation information and if so returns the implements string
+ * @param {Schema} schema the schema of the current class to generate
+ * @returns the string for the implements information
+ */
+function getImplementsClass(schema) {
+  if(schema._json['x-java-impl-information']) {
+    return 'implements '+schema._json['x-java-impl-information'].implClass;
+  }
+
+  return '';
+}
+filter.getImplementsClass = getImplementsClass;
+
+/**
+ * checks if the given prop is a discriminator value and returns if so
+ * @param {Schema} schema the schema of where the property is in
+ * @param {string} propertyName the name of the current property
+ * @returns 
+ */
+function getDiscriminatorValue(schema, propertyName) {
+  if(!schema._json['x-java-impl-information']) {
+    return '';  
+  }
+
+  if(schema._json['x-java-impl-information'].discriminatorField !== propertyName) {
+    return '';
+  }
+
+  return ' = "'+schema.uid()+'"';  
+}
+filter.getDiscriminatorValue = getDiscriminatorValue;

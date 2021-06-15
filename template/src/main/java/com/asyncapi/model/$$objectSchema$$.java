@@ -3,9 +3,7 @@ package {{ params['userJavaPackage'] }}.model;
 import javax.validation.constraints.*;
 import javax.validation.Valid;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 {%- endfor %}
 })
 public interface {{schemaName | camelCase | upperFirst}} {
+    @JsonIgnore
     String get{{schema.discriminator() | camelCase | upperFirst}}();
 }
 {%- else %}

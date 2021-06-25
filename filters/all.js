@@ -79,6 +79,7 @@ function toJavaType(str){
     case 'string':
     case 'password':
     case 'byte':
+    case 'email':  
       return 'String';
     case 'float':
       return 'float';
@@ -86,6 +87,8 @@ function toJavaType(str){
       return 'double';
     case 'binary':
       return 'byte[]';
+    case 'uuid':
+      return 'java.util.UUID';  
     default:
       return 'Object';
   }

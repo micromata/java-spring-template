@@ -9,10 +9,9 @@ import java.util.List;
 import java.util.Objects;
 
 {%- if schema | hasSubClasses %}
-{%- if schema.description() or schema.examples() %}
-
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+{%- if schema.description() or schema.examples() %}
 
 /**{% for line in schema.description() | splitByLines %}
  * {{ line | safe}}{% endfor %}{% if schema.examples() %}

@@ -49,6 +49,7 @@ module.exports = {
             javaPackage = extensions['x-java-package'];
         }
 
+
         Object.defineProperty(generator.templateParams, 'userJavaPackage', {
             enumerable: true,
             get() {

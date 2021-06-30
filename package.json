@@ -121,9 +121,11 @@
         "default": "com.asyncapi",
         "required": false
       },
-      "onlyModel" : {
+      "onlyModel": {
         "description": "Generates only the model java classes. This can be used for a shared library jar for example.",
         "default": "false",
+        "required": false
+      },
       "addTypeInfoHeader": {
         "description": "Only for Kafka. Add type information to the message header",
         "default": "true",

@@ -10,12 +10,12 @@
 {%- endfor -%}
 package {{ params['userJavaPackage'] }};
 
-{% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
-import {{ params['userJavaPackage'] }}.model.{{channel.subscribe().message().payload().uid() | camelCase | upperFirst}};
-{% endif %} {% endfor %}
-{% for channelName, channel in asyncapi.channels() %} {% if channel.hasPublish() %}
-import {{ params['userJavaPackage'] }}.model.{{channel.publish().message().payload().uid() | camelCase | upperFirst}};
-{% endif %} {% endfor %}
+{% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
+import {{ params['userJavaPackage'] }}.model.{{message.payload().uid() | camelCase | upperFirst}};
+{% endfor %} {% endif %} {% endfor %}
+{% for channelName, channel in asyncapi.channels() %} {% if channel.hasPublish() %} {% for message in channel.publish().messages() %}
+import {{ params['userJavaPackage'] }}.model.{{message.payload().uid() | camelCase | upperFirst}};
+{% endfor %} {% endif %} {% endfor %}
 {% if hasSubscribe %}import {{ params['userJavaPackage'] }}.service.PublisherService;{% endif %}
 import org.eclipse.paho.client.mqttv3.*;
 import org.junit.ClassRule;
@@ -78,10 +78,10 @@ public class TestcontainerMqttTest {
         publisher.disconnect();
     }
 
-    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
+    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
     @Test
     public void {{channel.subscribe().id() | camelCase}}ProducerTestcontainers() throws MqttException {
-        {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}} payload = new {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}}();
+        {{message.payload().uid() | camelCase | upperFirst}} payload = new {{message.payload().uid() | camelCase | upperFirst}}();
 
         List<MqttMessage> receivedMessages = new ArrayList<>();
         publisher.subscribe({{channel.subscribe().id() | camelCase-}}Topic, (topic, message) -> {
@@ -94,15 +94,16 @@ public class TestcontainerMqttTest {
 
         assertEquals("Message is wrong", payload.toString().getBytes(), message.getPayload());
     }
-    {% endif %} {% if channel.hasPublish() %}
+    {% endfor %} {% endif %} {% if channel.hasPublish() %} {% for message in channel.publish().messages() %}
     @Test
     public void {{channel.publish().id() | camelCase}}ConsumerTestcontainers() throws Exception {
-        {{channel.publish().message().payload().uid() | camelCase | upperFirst}} payload = new {{channel.publish().message().payload().uid() | camelCase | upperFirst}}();
+        {{message.payload().uid() | camelCase | upperFirst}} payload = new {{message.payload().uid() | camelCase | upperFirst}}();
 
         sendMessage({{channel.publish().id() | camelCase-}}Topic, payload.toString().getBytes());
 
         Thread.sleep(1_000);
     }
+    {% endfor %}
     {% endif %}
     {% endfor %}
     {% if hasPublish %}

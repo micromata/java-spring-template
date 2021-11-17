@@ -16,6 +16,7 @@ module.exports = {
 
             // remove gradle
             fs.removeSync(generator.targetDir + '/gradle');            
+            fs.removeSync(generator.targetDir + '/.gradle');            
             fs.removeSync(generator.targetDir + '/build.gradle');
             fs.removeSync(generator.targetDir + '/gradle.properties');
             fs.removeSync(generator.targetDir + '/gradlew');
@@ -32,6 +33,12 @@ module.exports = {
             fs.removeSync(generator.targetDir + '/src/main/java/com/asyncapi/infrastructure');
             fs.removeSync(generator.targetDir + '/src/main/java/com/asyncapi/service');
             fs.removeSync(generator.targetDir + '/src/main/java/com/asyncapi/Application.java');
+
+            // remove .gitignore
+            fs.removeSync(generator.targetDir + '/.gitignore');            
+
+            // remove resources
+            fs.removeSync(generator.targetDir + '/src/main/resources');            
         }
 
         

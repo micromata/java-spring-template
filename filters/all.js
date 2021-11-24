@@ -63,12 +63,12 @@ function toJavaType(str){
   switch(str) {
     case 'integer':
     case 'int32':
-      return 'int';
+      return 'Integer';
     case 'long':
     case 'int64':
-      return 'long';
+      return 'Long';
     case 'boolean':
-      return 'boolean';
+      return 'Boolean';
     case 'date':
       return 'java.time.LocalDate';
     case 'time':
@@ -82,11 +82,11 @@ function toJavaType(str){
     case 'email':  
       return 'String';
     case 'float':
-      return 'float';
+      return 'Float';
     case 'double':
-      return 'double';
+      return 'Double';
     case 'binary':
-      return 'byte[]';
+      return 'Byte[]';
     case 'uuid':
       return 'java.util.UUID';  
     default:

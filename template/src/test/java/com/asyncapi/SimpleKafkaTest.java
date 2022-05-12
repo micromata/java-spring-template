@@ -10,12 +10,12 @@
 {%- endfor -%}
 package {{ params['userJavaPackage'] }};
 
-{% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
-import {{ params['userJavaPackage'] }}.model.{{channel.subscribe().message().payload().uid() | camelCase | upperFirst}};
-{% endif %} {% endfor %}
-{% for channelName, channel in asyncapi.channels() %} {% if channel.hasPublish() %}
-import {{ params['userJavaPackage'] }}.model.{{channel.publish().message().payload().uid() | camelCase | upperFirst}};
-{% endif %} {% endfor %}
+{% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
+import {{ params['userJavaPackage'] }}.model.{{message.payload().uid() | camelCase | upperFirst}};
+{% endfor %} {% endif %} {% endfor %}
+{% for channelName, channel in asyncapi.channels() %} {% if channel.hasPublish() %} {% for message in channel.publish().messages() %}
+import {{ params['userJavaPackage'] }}.model.{{message.payload().uid() | camelCase | upperFirst}};
+{% endfor %} {% endif %} {% endfor %}
 {% if hasSubscribe %}import {{ params['userJavaPackage'] }}.service.PublisherService;{% endif %}
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -72,9 +72,9 @@ public class SimpleKafkaTest {
     {% if hasSubscribe %}
     @Autowired
     private PublisherService publisherService;
-    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
-    Consumer<Integer, {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}}> consumer{{ channelName | camelCase | upperFirst}};
-    {% endif %} {% endfor %} {% endif %} {% if hasPublish %}
+    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
+    Consumer<Integer, {{message.payload().uid() | camelCase | upperFirst}}> consumer{{ channelName | camelCase | upperFirst}};
+    {% endfor %} {% endif %} {% endfor %} {% endif %} {% if hasPublish %}
     Producer<Integer, Object> producer;
     {% endif %}
     @Before
@@ -82,40 +82,41 @@ public class SimpleKafkaTest {
         {% if hasSubscribe %}
         Map<String, Object> consumerConfigs = new HashMap<>(KafkaTestUtils.consumerProps("consumer", "true", embeddedKafkaBroker));
         consumerConfigs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
-        consumer{{ channelName | camelCase | upperFirst}} = new DefaultKafkaConsumerFactory<>(consumerConfigs, new IntegerDeserializer(), new JsonDeserializer<>({{channel.subscribe().message().payload().uid() | camelCase | upperFirst}}.class)).createConsumer();
+        
+        {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
+        consumer{{ channelName | camelCase | upperFirst}} = new DefaultKafkaConsumerFactory<>(consumerConfigs, new IntegerDeserializer(), new JsonDeserializer<>({{message.payload().uid() | camelCase | upperFirst}}.class)).createConsumer();
         consumer{{ channelName | camelCase | upperFirst}}.subscribe(Collections.singleton({{channel.subscribe().id() | upper-}}_TOPIC));
         consumer{{ channelName | camelCase | upperFirst}}.poll(Duration.ZERO);
-        {% endif %} {% endfor %} {% endif %} {% if hasPublish %}
+        {% endfor %} {% endif %} {% endfor %} {% endif %} {% if hasPublish %}
         Map<String, Object> producerConfigs = new HashMap<>(KafkaTestUtils.producerProps(embeddedKafkaBroker));
         producer = new DefaultKafkaProducerFactory<>(producerConfigs, new IntegerSerializer(), new JsonSerializer()).createProducer();
         {% endif %}
     }
-    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
+    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %} 
     @Test
     public void {{channel.subscribe().id() | camelCase}}ProducerTest() {
-        {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}} payload = new {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}}();
+        {{message.payload().uid() | camelCase | upperFirst}} payload = new {{message.payload().uid() | camelCase | upperFirst}}();
         Integer key = 1;
 
         KafkaTestUtils.getRecords(consumer{{ channelName | camelCase | upperFirst}});
 
         publisherService.{{channel.subscribe().id() | camelCase}}(key, payload);
 
-        ConsumerRecord<Integer, {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}}> singleRecord = KafkaTestUtils.getSingleRecord(consumer{{ channelName | camelCase | upperFirst}}, {{channel.subscribe().id() | upper-}}_TOPIC);
+        ConsumerRecord<Integer, {{message.payload().uid() | camelCase | upperFirst}}> singleRecord = KafkaTestUtils.getSingleRecord(consumer{{ channelName | camelCase | upperFirst}}, {{channel.subscribe().id() | upper-}}_TOPIC);
 
         assertEquals("Key is wrong", key, singleRecord.key());
     }
-        {% endif %} {% if channel.hasPublish() %}
+    {% endfor %} {% endif %} {% if channel.hasPublish() %}  {% for message in channel.publish().messages() %} 
     @Test
     public void {{channel.publish().id() | camelCase}}ConsumerTest() throws InterruptedException {
         Integer key = 1;
-        {{channel.publish().message().payload().uid() | camelCase | upperFirst}} payload = new {{channel.publish().message().payload().uid() | camelCase | upperFirst}}();
+        {{message.payload().uid() | camelCase | upperFirst}} payload = new {{message.payload().uid() | camelCase | upperFirst}}();
 
         ProducerRecord<Integer, Object> producerRecord = new ProducerRecord<>({{channel.publish().id() | upper-}}_TOPIC, key, payload);
         producer.send(producerRecord);
         producer.flush();
         Thread.sleep(1_000);
     }
-        {% endif %}
+      {% endfor %} {% endif %}
     {% endfor %}
 }

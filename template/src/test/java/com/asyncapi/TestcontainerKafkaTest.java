@@ -10,12 +10,12 @@
 {%- endfor -%}
 package {{ params['userJavaPackage'] }};
 
-{% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
-import {{ params['userJavaPackage'] }}.model.{{channel.subscribe().message().payload().uid() | camelCase | upperFirst}};
-{% endif %} {% endfor %}
-{% for channelName, channel in asyncapi.channels() %} {% if channel.hasPublish() %}
-import {{ params['userJavaPackage'] }}.model.{{channel.publish().message().payload().uid() | camelCase | upperFirst}};
-{% endif %} {% endfor %}
+{% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
+import {{ params['userJavaPackage'] }}.model.{{message.payload().uid() | camelCase | upperFirst}};
+{% endfor %} {% endif %} {% endfor %}
+{% for channelName, channel in asyncapi.channels() %} {% if channel.hasPublish() %}  {% for message in channel.publish().messages() %}
+import {{ params['userJavaPackage'] }}.model.{{message.payload().uid() | camelCase | upperFirst}};
+{% endfor %} {% endif %} {% endfor %}
 {% if hasSubscribe %}import {{ params['userJavaPackage'] }}.service.PublisherService;{% endif %}
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -70,10 +70,10 @@ public class TestcontainerKafkaTest {
     public static void kafkaProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
     }
-    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %}
+    {% for channelName, channel in asyncapi.channels() %} {% if channel.hasSubscribe() %} {% for message in channel.subscribe().messages() %}
     @Test
     public void {{channel.subscribe().id() | camelCase}}ProducerTestcontainers() {
-        {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}} payload = new {{channel.subscribe().message().payload().uid() | camelCase | upperFirst}}();
+        {{message.payload().uid() | camelCase | upperFirst}} payload = new {{message.payload().uid() | camelCase | upperFirst}}();
         Integer key = 1;
         Integer wrongKey = key + 1;
 
@@ -86,11 +86,11 @@ public class TestcontainerKafkaTest {
         assertEquals("Key is wrong", key, consumedMessage.key());
         assertNotEquals("Key is wrong", wrongKey, consumedMessage.key());
     }
-    {% endif %} {% if channel.hasPublish() %}
+    {% endfor %} {% endif %} {% if channel.hasPublish() %} {% for message in channel.publish().messages() %}
     @Test
     public void {{channel.publish().id() | camelCase}}ConsumerTestcontainers() throws Exception {
         Integer key = 1;
-        {{channel.publish().message().payload().uid() | camelCase | upperFirst}} payload = new {{channel.publish().message().payload().uid() | camelCase | upperFirst}}();
+        {{message.payload().uid() | camelCase | upperFirst}} payload = new {{message.payload().uid() | camelCase | upperFirst}}();
 
         ProducerRecord<Integer, Object> producerRecord = new ProducerRecord<>({{channel.publish().id() |  upper-}}_TOPIC, key, payload);
 
@@ -98,7 +98,7 @@ public class TestcontainerKafkaTest {
 
         Thread.sleep(1_000);
     }
-    {% endif %}
+    {% endfor %} {% endif %}
     {% endfor %}
     {% if hasPublish %}
     protected void sendMessage(ProducerRecord message) throws Exception {

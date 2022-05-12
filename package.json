@@ -130,7 +130,13 @@
         "description": "Only for Kafka. Add type information to the message header",
         "default": "true",
         "required": false
+      },
+      "jakartaValidation" : {
+        "description": "When set javax.validation is replaced with jakarta.validation",
+        "default": "false",
+        "required": false
       }
+
     },
     "generator": ">=0.50.0 <2.0.0",
     "filters": [

@@ -1,7 +1,13 @@
 package {{ params['userJavaPackage'] }}.model;
 
+{%- if params.jakartaValidation === 'false' %}
 import javax.validation.constraints.*;
 import javax.validation.Valid;
+{%- else %}
+import jakarta.validation.constraints.*;
+import jakarta.validation.Valid;
+{%- endif %}
+
 
 import com.fasterxml.jackson.annotation.*;
 

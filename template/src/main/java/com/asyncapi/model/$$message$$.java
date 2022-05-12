@@ -1,6 +1,10 @@
 package {{ params['userJavaPackage'] }}.model;
 
+{%- if params.jakartaValidation === 'false' %}
 import javax.validation.Valid;
+{%- else %}
+import jakarta.validation.Valid;
+{%- endif %}
 
 import java.util.Objects;
 import java.util.List;
